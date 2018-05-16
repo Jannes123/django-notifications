@@ -3,6 +3,7 @@ from distutils.version import StrictVersion
 from django import get_version
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -169,6 +170,7 @@ def live_unread_notification_list(request):
             struct['action_object'] = str(n.action_object)
         if n.data:
             struct['data'] = n.data
+        struct['deleter'] = reverse('notifications:delete', kwargs = {'slug': id2slug(n.id)})
         unread_list.append(struct)
         if request.GET.get('mark_as_read'):
             n.mark_as_read()

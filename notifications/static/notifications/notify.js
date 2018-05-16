@@ -34,7 +34,7 @@ function fill_notification_list(data) {
             if(typeof item.timestamp !== 'undefined'){
                 message = message + " " + item.timestamp;
             }
-            return '<li>' + message + '</li>';
+            return '<li>' + message + '</li><a class="btn btn-primary" href="'+ origin + item.deleter + '" role="button">Del</a>';
         }).join('')
 
         for (var i = 0; i < menus.length; i++){
