@@ -11,6 +11,8 @@ from django.views.generic import ListView
 
 from .models import Notification
 from .utils import id2slug, slug2id
+import logging
+LOGGER = logging.getLogger('django.request')
 
 if StrictVersion(get_version()) >= StrictVersion('1.7.0'):
     from django.http import JsonResponse
@@ -29,7 +31,7 @@ else:
 
 
 class NotificationViewList(ListView):
-    template_name = 'notifications/list.html'
+    template_name = '../../../experiments/notifications/list.html'
     context_object_name = 'notifications'
 
     @method_decorator(login_required)
@@ -102,24 +104,50 @@ def mark_as_unread(request, slug=None):
 
 @login_required
 def delete(request, slug=None):
+    LOGGER.debug('delete')
+    LOGGER.debug(request)
+    LOGGER.debug(request.POST)
+    LOGGER.debug(request.scheme)
+    LOGGER.debug(request.body)
+    LOGGER.debug(request.__dict__)
+    LOGGER.debug(request.method)
+
     _id = slug2id(slug)
+    if request.GET:
+        LOGGER.debug('delete--GET--')
+        notification = get_object_or_404(
+            Notification, recipient=request.user, id=_id)
+        if getattr(settings, 'NOTIFICATIONS_SOFT_DELETE', False):
+            notification.deleted = True
+            notification.save()
+        else:
+            notification.delete()
 
-    notification = get_object_or_404(
-        Notification, recipient=request.user, id=_id)
+        _next = request.GET.get('next')
 
-    if getattr(settings, 'NOTIFICATIONS_SOFT_DELETE', False):
-        notification.deleted = True
-        notification.save()
+        if _next:
+            return redirect(_next)
+
+        return redirect('notifications:all')
+
+    elif request.method == 'POST':
+        LOGGER.debug('delete--POST--')
+        notification = get_object_or_404(
+            Notification, recipient=request.user, id=_id)
+        if getattr(settings, 'NOTIFICATIONS_SOFT_DELETE', False):
+            notification.deleted = True
+            notification.save()
+        else:
+            notification.delete()
+        _next = request.POST.get('next')
+
+        if _next:
+            LOGGER.debug('next redirect in POST')
+            return redirect(_next)
+
+        return JsonResponse({'message':'task deleted'})
     else:
-        notification.delete()
-
-    _next = request.GET.get('next')
-
-    if _next:
-        return redirect(_next)
-
-    return redirect('notifications:all')
-
+        return JsonResponse({'message':'invalid http method????'})
 
 def live_unread_notification_count(request):
     try:

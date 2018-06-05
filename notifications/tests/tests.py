@@ -353,7 +353,7 @@ class NotificationTestPages(TestCase):
         request = self.factory.get('/notification/live_updater')
         request.user = self.to_user
 
-        render(request, 'notifications/test_tags.html', {'request': request})
+        render(request, '../../../../experiments/notifications/test_tags.html', {'request': request})
 
         # TODO: Add more tests to check what is being output.
 
